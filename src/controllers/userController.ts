@@ -168,23 +168,45 @@ const getLoggedInUser = async (req: Request, res: Response): Promise<void> => {
 	}
 };
 
-// const getUser = async (req: Request, res: Response): Promise<void> => {
-// 	try {
-// 		const { id } = req.params;
+const getUser = async (req: Request, res: Response): Promise<void> => {
+	try {
+		const { id } = req.params;
 
-// 		const user = await prisma.user.findUnique({
-// 			where: { id },
-// 			select: {
-// 				name: true,
-// 				username: true,
-// 				role: true,
+		const user = await prisma.user.findUnique({
+			where: {
+				id,
+			},
+			select: {
+				name: true,
+				username: true,
+				email: true,
 
-// 				projects: {
-// 					include:
-// 				}
-// 			}
-// 		});
-// 	} catch (error) {}
-// };
+				_count: {
+					select: {
+						projects: true,
+					},
+				},
+				assignedTasks: true,
+			},
+		});
 
-export { signupUser, signinUser, signoutUser, getLoggedInUser };
+		if (!user) {
+			res.status(404).json(createErrorResponse("User not found"));
+			return;
+		}
+
+		res.status(200).json(
+			createSuccessResponse("User info fetched successfully", user)
+		);
+	} catch (error) {
+		console.log("Get user error: ", error);
+		const err =
+			error instanceof Error ? error.message : "Something went wrong";
+
+		res.status(500).json(
+			createErrorResponse("Internal server error", [err])
+		);
+	}
+};
+
+export { signupUser, signinUser, signoutUser, getLoggedInUser, getUser };

@@ -203,10 +203,44 @@ const deleteProject = async (req: Request, res: Response): Promise<void> => {
 	}
 };
 
+const getAllTasks = async (req: Request, res: Response): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const userId = req.user?.id;
+
+		const project = await prisma.project.findFirst({
+			where: {
+				id: Number(id),
+				ownerId: userId,
+			},
+			include: {
+				tasks: true,
+			},
+		});
+
+		if (!project) {
+			res.status(404).json(createErrorResponse("Project not found"));
+			return;
+		}
+
+		res.status(201).json(
+			createSuccessResponse("Tasks fetched successfully", project.tasks)
+		);
+	} catch (error) {
+		console.log("Get all tasks error: ", error);
+		const err =
+			error instanceof Error ? error.message : "Something went wrong";
+		res.status(500).json(
+			createErrorResponse("Internal server error", [err])
+		);
+	}
+};
+
 export {
 	createProject,
 	getLoggedInUserProjects,
 	getProject,
 	updateProject,
 	deleteProject,
+	getAllTasks,
 };
